@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:todo/data/sql_database.dart';
+import '../screens/edit_reminder_screen.dart';
 import '../helpers/date_time.dart';
 import '../models/task.dart';
-import 'package:flutter/painting.dart';
 
 class TaskTile extends StatefulWidget {
   final Task task;
@@ -15,10 +16,13 @@ class TaskTile extends StatefulWidget {
 }
 
 class _TaskTileState extends State<TaskTile> {
-  void _onChecked(bool value) {
+  final _database = SQLDatabase();
+  Future<void> _onChecked(bool value) async {
     setState(() {
       widget.task.isDone = value;
+      widget.task.shouldRemind = value ? false : true;
     });
+    await _database.updateTask(widget.task);
   }
 
   @override
@@ -35,7 +39,7 @@ class _TaskTileState extends State<TaskTile> {
           mainAxisAlignment: MainAxisAlignment.start,
           children: [
             SizedBox(width: 12.0),
-            StartTime(startTime: widget.task.startTime),
+            EndTime(endTime: widget.task.endTime),
             DotPath(isDone: widget.task.isDone),
             TaskHolder(task: widget.task),
             Expanded(
@@ -46,10 +50,15 @@ class _TaskTileState extends State<TaskTile> {
                     Checkbox(
                       materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                       value: widget.task.isDone,
-                      onChanged: _onChecked,
+                      onChanged: (value) => _onChecked(value),
                     ),
                     TextButton(
-                      onPressed: () {},
+                      onPressed: () {
+                        Navigator.of(context, rootNavigator: true).push(
+                            MaterialPageRoute(
+                                builder: (_) =>
+                                    EditReminderScreen(task: widget.task)));
+                      },
                       child: Text('Details'),
                     ),
                   ],
@@ -63,12 +72,23 @@ class _TaskTileState extends State<TaskTile> {
   }
 }
 
-class StartTime extends StatelessWidget {
-  final int startTime;
+class EndTime extends StatelessWidget {
+  final int endTime;
 
-  const StartTime({Key key, this.startTime}) : super(key: key);
+  const EndTime({Key key, this.endTime}) : super(key: key);
   @override
   Widget build(BuildContext context) {
+    String text;
+    final endDate = DateTime.fromMillisecondsSinceEpoch(endTime);
+    if (endDate.year != DateTime.now().year) {
+      text = Format.getDate(endDate) + Format.getTime(endDate);
+    } else if (endDate.difference(DateTime.now()).compareTo(Duration(days: 1)) >
+        0) {
+      text =
+          Format.getMonthDayMonthName(endDate) + "\n" + Format.getTime(endDate);
+    } else {
+      text = Format.getClockTime(DateTime.fromMillisecondsSinceEpoch(endTime));
+    }
     return Column(
       children: [
         SizedBox(height: 18.0),
@@ -76,7 +96,7 @@ class StartTime extends StatelessWidget {
           width: 60.0,
           height: 50.0,
           child: Text(
-            Format.getClockTime(DateTime.fromMillisecondsSinceEpoch(startTime)),
+            text,
             style: TextStyle(
               fontSize: 12.0,
               color: Colors.grey,
@@ -173,6 +193,9 @@ class TaskHolder extends StatelessWidget {
               style: TextStyle(
                 fontSize: 15.0,
                 fontWeight: FontWeight.w600,
+                decoration: task.isDone
+                    ? TextDecoration.lineThrough
+                    : TextDecoration.none,
               ),
               overflow: TextOverflow.ellipsis,
             ),
