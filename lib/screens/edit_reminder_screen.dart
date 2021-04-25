@@ -5,10 +5,12 @@ import '../models/task.dart';
 
 class EditReminderScreen extends StatefulWidget {
   final Task task;
+  final bool editMode;
 
-  const EditReminderScreen({
+  EditReminderScreen({
     Key key,
-    this.task,
+    @required this.task,
+    this.editMode = false,
   }) : super(key: key);
   @override
   _EditReminderScreenState createState() => _EditReminderScreenState();
@@ -16,6 +18,8 @@ class EditReminderScreen extends StatefulWidget {
 
 class _EditReminderScreenState extends State<EditReminderScreen> {
   String _title;
+  String _buttonText;
+  bool _editMode;
   Task task;
   TextEditingController _nameController;
   TextEditingController _descriptionController;
@@ -28,9 +32,11 @@ class _EditReminderScreenState extends State<EditReminderScreen> {
   void initState() {
     _nameController = TextEditingController();
     _descriptionController = TextEditingController();
+    _editMode = widget.editMode;
     if (widget.task == null) {
       _isNewTask = true;
       _title = 'Create New Task';
+      _buttonText = 'Create Task';
       task = Task(
         startTime: DateTime.now().millisecondsSinceEpoch,
         endTime: DateTime.now().millisecondsSinceEpoch,
@@ -39,9 +45,18 @@ class _EditReminderScreenState extends State<EditReminderScreen> {
       );
       pickedStartTime = DateTime.now();
       pickedEndTime = DateTime.now();
-    } else {
+    } else if (widget.editMode == true) {
       _isNewTask = false;
       _title = 'Edit Task';
+      _buttonText = 'Save Changes';
+      task = widget.task;
+
+      pickedStartTime = DateTime.fromMillisecondsSinceEpoch(task.startTime);
+      pickedEndTime = DateTime.fromMillisecondsSinceEpoch(task.endTime);
+    } else {
+      _isNewTask = false;
+      _title = 'Task';
+      _buttonText = 'Edit Task'; //////////TODO:Use carefully
       task = widget.task;
 
       pickedStartTime = DateTime.fromMillisecondsSinceEpoch(task.startTime);
@@ -217,6 +232,7 @@ class _EditReminderScreenState extends State<EditReminderScreen> {
                       ),
                       SizedBox(height: 8.0),
                       TextField(
+                        enabled: _editMode || _isNewTask,
                         keyboardType: TextInputType.name,
                         controller: _nameController,
                         style: TextStyle(
@@ -266,7 +282,7 @@ class _EditReminderScreenState extends State<EditReminderScreen> {
                                       constraints.maxHeight / 6),
                                   child: CalendarDatePicker(
                                     pickedDate: pickedStartTime,
-                                    onPressed: _isNewTask
+                                    onPressed: _isNewTask || _editMode
                                         ? _showStartDatePicker
                                         : null,
                                     title: 'Start date',
@@ -277,7 +293,9 @@ class _EditReminderScreenState extends State<EditReminderScreen> {
                                       constraints.maxHeight / 6),
                                   child: CalendarDatePicker(
                                     pickedDate: pickedEndTime,
-                                    onPressed: _showEndDatePicker,
+                                    onPressed: _isNewTask || _editMode
+                                        ? _showEndDatePicker
+                                        : null,
                                     title: 'End date',
                                   ),
                                 ),
@@ -292,22 +310,26 @@ class _EditReminderScreenState extends State<EditReminderScreen> {
                                 TimeBiscut(
                                   title: 'Start time',
                                   time: Format.getTime(pickedStartTime),
-                                  onTap:
-                                      _isNewTask ? _showStartTimePicker : null,
+                                  onTap: _isNewTask || _editMode
+                                      ? _showStartTimePicker
+                                      : null,
                                 ),
                                 SizedBox(width: 10.0),
                                 TimeBiscut(
                                   title: 'End time',
                                   time: Format.getTime(pickedEndTime),
-                                  onTap: _showEndTimePicker,
+                                  onTap: _isNewTask || _editMode
+                                      ? _showEndTimePicker
+                                      : null,
                                 ),
                               ],
                             ),
                             Spacer(),
                             SizedBox.fromSize(
                               size: Size(constraints.maxWidth,
-                                  constraints.maxHeight / 5.5),
+                                  constraints.maxHeight / 4.8),
                               child: TextField(
+                                enabled: _editMode || _isNewTask,
                                 maxLines: 2,
                                 controller: _descriptionController,
                                 decoration: InputDecoration(
@@ -317,7 +339,7 @@ class _EditReminderScreenState extends State<EditReminderScreen> {
                             ),
                             Spacer(),
                             SwitchListTile(
-                              title: Text('🔔 Remind me'),
+                              title: Text('🔔  Remind me'),
                               value: task.shouldRemind,
                               onChanged: (value) {
                                 setState(() {
@@ -327,9 +349,16 @@ class _EditReminderScreenState extends State<EditReminderScreen> {
                             ),
                             Spacer(),
                             TextButton(
-                              onPressed: () {
-                                _saveTask();
-                              },
+                              onPressed: _isNewTask || _editMode
+                                  ? () {
+                                      _saveTask();
+                                    }
+                                  : () => setState(() {
+                                        _editMode = !_editMode;
+                                        _buttonText = _editMode
+                                            ? 'Save Changes'
+                                            : 'Edit Task';
+                                      }),
                               style: ButtonStyle(
                                 backgroundColor:
                                     MaterialStateProperty.all<Color>(
@@ -339,7 +368,7 @@ class _EditReminderScreenState extends State<EditReminderScreen> {
                                 padding: const EdgeInsets.symmetric(
                                     horizontal: 40.0),
                                 child: Text(
-                                  'Create Task',
+                                  _buttonText,
                                   style: TextStyle(
                                     color: Colors.white,
                                   ),
@@ -452,82 +481,9 @@ class CalendarDatePicker extends StatelessWidget {
         labelText: title,
         suffix: IconButton(
           icon: Icon(Icons.calendar_today_outlined),
-          onPressed: () => onPressed(),
+          onPressed: onPressed != null ? () => onPressed() : null,
         ),
       ),
     );
   }
 }
-
-
-
-// CalendarDatePicker(
-//                       pickedDate: pickedStartTime,
-//                       onPressed: _showStartDatePicker,
-//                       title: 'Start Date',
-//                     ),
-//                     CalendarDatePicker(
-//                       pickedDate: pickedStartTime,
-//                       onPressed: _showEndDatePicker,
-//                       title: 'End Date',
-//                     ),
-//                     FittedBox(
-//                       fit: BoxFit.scaleDown,
-//                       child: Flex(
-//                         direction: Axis.horizontal,
-//                         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-//                         mainAxisSize: MainAxisSize.min,
-//                         children: [
-//                           TimeBiscut(
-//                             title: 'Start time',
-//                             time: Format.getTime(
-//                                 DateTime.fromMillisecondsSinceEpoch(
-//                                     pickedStartTime.millisecondsSinceEpoch)),
-//                             onTap: _isNewTask
-//                                 ? () => _showStartTimePicker()
-//                                 : null,
-//                           ),
-//                           TimeBiscut(
-//                             title: 'End time',
-//                             time: Format.getTime(
-//                                 DateTime.fromMillisecondsSinceEpoch(
-//                                     pickedEndTime.millisecondsSinceEpoch)),
-//                             onTap: () => _showEndTimePicker(),
-//                           ),
-//                         ],
-//                       ),
-//                     ),
-//                     TextField(
-//                       maxLines: 2,
-//                       controller: _descriptionController,
-//                       decoration: InputDecoration(
-//                         labelText: 'Description',
-//                       ),
-//                     ),
-//                     SwitchListTile(
-//                       title: Text('🔔 Remind me'),
-//                       value: task.shouldRemind,
-//                       onChanged: (value) {
-//                         setState(() {
-//                           task.shouldRemind = value;
-//                         });
-//                       },
-//                     ),
-//                     TextButton(
-//                       onPressed: () {
-//                         _saveTask();
-//                       },
-//                       style: ButtonStyle(
-//                         backgroundColor:
-//                             MaterialStateProperty.all<Color>(Colors.blue[700]),
-//                       ),
-//                       child: Padding(
-//                         padding: const EdgeInsets.symmetric(horizontal: 40.0),
-//                         child: Text(
-//                           'Create Task',
-//                           style: TextStyle(
-//                             color: Colors.white,
-//                           ),
-//                         ),
-//                       ),
-//                     ),

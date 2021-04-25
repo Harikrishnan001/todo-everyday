@@ -83,9 +83,6 @@ class _HomeScreenState extends State<HomeScreen>
         controller: _scrollController,
         slivers: [
           SliverPadding(
-            padding: const EdgeInsets.all(4.0),
-          ),
-          SliverPadding(
             padding: const EdgeInsets.all(8.0),
             sliver: SliverAppBar(
               backgroundColor: Colors.blue[700],
@@ -176,13 +173,6 @@ class _HomeScreenState extends State<HomeScreen>
           FutureBuilder<List<Task>>(
             future: _database.getUnfinishedTasks(),
             builder: (context, snapshot) {
-              if (snapshot.connectionState == ConnectionState.waiting) {
-                return SliverToBoxAdapter(
-                  child: Center(
-                    child: CircularProgressIndicator(),
-                  ),
-                );
-              }
               if (snapshot.hasError) {
                 return SliverToBoxAdapter(
                     child: Center(child: Text('Something went wrong')));
@@ -201,6 +191,7 @@ class _HomeScreenState extends State<HomeScreen>
                     return TaskTile(
                       task: snapshot.data[index],
                       width: MediaQuery.of(context).size.width,
+                      onUpdate: () => setState(() {}),
                     );
                   },
                   childCount: snapshot.hasData ? snapshot.data.length : 0,

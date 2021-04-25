@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:todo/data/sql_database.dart';
 import '../screens/edit_reminder_screen.dart';
@@ -7,8 +9,13 @@ import '../models/task.dart';
 class TaskTile extends StatefulWidget {
   final Task task;
   final double width;
+  final VoidCallback onUpdate;
 
-  const TaskTile({Key key, @required this.task, @required this.width})
+  const TaskTile(
+      {Key key,
+      @required this.task,
+      @required this.width,
+      @required this.onUpdate})
       : super(key: key);
 
   @override
@@ -17,12 +24,48 @@ class TaskTile extends StatefulWidget {
 
 class _TaskTileState extends State<TaskTile> {
   final _database = SQLDatabase();
+  Timer _timer;
+  Color _dotColor;
+  void initState() {
+    _calculateColor();
+    _timer = Timer.periodic(Duration(minutes: 1), (timer) {
+      print("Timer called");
+      final oldColor = _dotColor;
+      _calculateColor();
+      if (oldColor != _dotColor) {
+        setState(() {});
+        if (_dotColor == Colors.red) _timer.cancel();
+      }
+    });
+    super.initState();
+  }
+
+  void dispose() {
+    _timer.cancel();
+    super.dispose();
+  }
+
+  void _calculateColor() {
+    if (widget.task.endTime < DateTime.now().millisecondsSinceEpoch &&
+        !widget.task.isDone)
+      _dotColor = Colors.red;
+    else {
+      _dotColor = widget.task.isDone ? Colors.grey : Colors.blue[700];
+    }
+  }
+
   Future<void> _onChecked(bool value) async {
     setState(() {
       widget.task.isDone = value;
       widget.task.shouldRemind = value ? false : true;
     });
+    widget.onUpdate();
     await _database.updateTask(widget.task);
+  }
+
+  Future<void> _deleteTask() async {
+    await _database.removeTask(widget.task);
+    widget.onUpdate();
   }
 
   @override
@@ -40,7 +83,7 @@ class _TaskTileState extends State<TaskTile> {
           children: [
             SizedBox(width: 12.0),
             EndTime(endTime: widget.task.endTime),
-            DotPath(isDone: widget.task.isDone),
+            DotPath(color: _dotColor),
             TaskHolder(task: widget.task),
             Expanded(
               child: FittedBox(
@@ -50,17 +93,30 @@ class _TaskTileState extends State<TaskTile> {
                     Checkbox(
                       materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                       value: widget.task.isDone,
-                      onChanged: (value) => _onChecked(value),
+                      onChanged: _dotColor == Colors.blue[700]
+                          ? (value) => _onChecked(value)
+                          : null,
                     ),
-                    TextButton(
-                      onPressed: () {
-                        Navigator.of(context, rootNavigator: true).push(
-                            MaterialPageRoute(
-                                builder: (_) =>
-                                    EditReminderScreen(task: widget.task)));
-                      },
-                      child: Text('Details'),
-                    ),
+                    _dotColor == Colors.blue[700]
+                        ? TextButton(
+                            onPressed: () {
+                              Navigator.of(context, rootNavigator: true).push(
+                                  MaterialPageRoute(
+                                      builder: (_) => EditReminderScreen(
+                                          task: widget.task)));
+                            },
+                            child: Text('Details'),
+                          )
+                        : IconButton(
+                            icon: Icon(
+                              Icons.delete,
+                              color: Colors.red,
+                              size: 32.0,
+                            ),
+                            onPressed: () {
+                              _deleteTask();
+                            },
+                          ),
                   ],
                 ),
               ),
@@ -111,9 +167,8 @@ class EndTime extends StatelessWidget {
 }
 
 class DotPath extends StatelessWidget {
-  final bool isDone;
-
-  const DotPath({Key key, @required this.isDone}) : super(key: key);
+  final Color color;
+  const DotPath({Key key, @required this.color}) : super(key: key);
   @override
   Widget build(BuildContext context) {
     return Padding(
@@ -124,47 +179,47 @@ class DotPath extends StatelessWidget {
         children: [
           Icon(
             Icons.circle,
-            color: isDone ? Colors.grey : Colors.blue,
+            color: color,
             size: 4.0,
           ),
           Icon(
             Icons.circle,
-            color: isDone ? Colors.grey : Colors.blue,
+            color: color,
             size: 4.0,
           ),
           Icon(
             Icons.circle,
-            color: isDone ? Colors.grey : Colors.blue,
+            color: color,
             size: 13.0,
           ),
           Icon(
             Icons.circle,
-            color: isDone ? Colors.grey : Colors.blue,
+            color: color,
             size: 4.0,
           ),
           Icon(
             Icons.circle,
-            color: isDone ? Colors.grey : Colors.blue,
+            color: color,
             size: 4.0,
           ),
           Icon(
             Icons.circle,
-            color: isDone ? Colors.grey : Colors.blue,
+            color: color,
             size: 4.0,
           ),
           Icon(
             Icons.circle,
-            color: isDone ? Colors.grey : Colors.blue,
+            color: color,
             size: 4.0,
           ),
           Icon(
             Icons.circle,
-            color: isDone ? Colors.grey : Colors.blue,
+            color: color,
             size: 4.0,
           ),
           Icon(
             Icons.circle,
-            color: isDone ? Colors.grey : Colors.blue,
+            color: color,
             size: 4.0,
           ),
         ],
@@ -191,7 +246,7 @@ class TaskHolder extends StatelessWidget {
               task.task,
               maxLines: 2,
               style: TextStyle(
-                fontSize: 15.0,
+                fontSize: 16.0,
                 fontWeight: FontWeight.w600,
                 decoration: task.isDone
                     ? TextDecoration.lineThrough
@@ -201,13 +256,15 @@ class TaskHolder extends StatelessWidget {
             ),
           ),
           SizedBox(height: 3.0),
-          Text(
-            Format.getClockTime(
-                    DateTime.fromMillisecondsSinceEpoch(task.startTime)) +
-                "-" +
-                Format.getClockTime(
-                    DateTime.fromMillisecondsSinceEpoch(task.endTime)),
-            style: TextStyle(fontSize: 12.0),
+          Flexible(
+            child: Text(
+              task.taskDescription == null || task.taskDescription.length == 0
+                  ? ''
+                  : task.taskDescription,
+              style: TextStyle(fontSize: 12.0),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
           ),
         ],
       ),

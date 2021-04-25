@@ -49,14 +49,6 @@ class SQLDatabase {
   }
 
   Future<int> updateTask(Task task) async {
-    if (task == null) print("Task is null");
-    if (task.isDone == null) print("is done is null");
-    if (task.shouldRemind == null) print("remind is null");
-    if (task.endTime == null) print("endTime is null");
-    if (task.startTime == null) print("starttime is null");
-    if (task.id == null) print("id is null");
-    if (task.task == null) print("task name is null");
-
     final result = await _db.update(tableReminder, task.toMap(),
         where: '$colId = ?', whereArgs: [task.id]);
     return result;
@@ -74,7 +66,8 @@ class SQLDatabase {
     if (_db == null) await init();
     final list = await _db.query(
       tableReminder,
-      where: '$colIsDone=?',
+      where:
+          '$colIsDone=? AND $colEndTime > ${DateTime.now().millisecondsSinceEpoch}',
       whereArgs: ['0'],
       orderBy: colEndTime,
     );
@@ -84,11 +77,22 @@ class SQLDatabase {
   Future<List<Task>> getFinishedTasks() async {
     final list = await _db.query(
       tableReminder,
-      where: '$colIsDone=?',
-      whereArgs: ['1'],
+      where:
+          '$colIsDone=? OR ($colEndTime < ${DateTime.now().millisecondsSinceEpoch} AND $colIsDone =?)',
+      whereArgs: ['1', '0'],
       orderBy: colEndTime,
     );
     return list.map((map) => Task.fromMap(map)).toList();
+  }
+
+  Future<int> removeAllFinishedTasks() async {
+    int result = await _db.delete(
+      tableReminder,
+      where:
+          '$colIsDone=? OR ($colEndTime < ${DateTime.now().millisecondsSinceEpoch} AND $colIsDone =?)',
+      whereArgs: ['1', '0'],
+    );
+    return result;
   }
 
   Future<void> closeDatabase() async {

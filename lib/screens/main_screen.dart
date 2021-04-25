@@ -14,9 +14,11 @@ class MainScreen extends StatefulWidget {
 class _MainScreenState extends State<MainScreen>
     with SingleTickerProviderStateMixin {
   TabController _tabController;
-  bool _bottomSheetActive = false;
   void initState() {
     _tabController = TabController(length: 4, vsync: this, initialIndex: 0);
+    _tabController.addListener(() {
+      _changeColor();
+    });
     super.initState();
   }
 
@@ -49,18 +51,6 @@ class _MainScreenState extends State<MainScreen>
         _profileActive = true;
     }
     setState(() {});
-  }
-
-  void _onBottomSheetOpened() {
-    setState(() {
-      _bottomSheetActive = true;
-    });
-  }
-
-  void _onBottomSheetClosed() {
-    setState(() {
-      _bottomSheetActive = false;
-    });
   }
 
   @override
