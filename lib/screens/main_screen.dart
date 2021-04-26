@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:todo/helpers/quote_picker.dart';
 import '../screens/edit_reminder_screen.dart';
 import '../screens/profile_screen.dart';
 import 'finished_tasks_screen.dart';
@@ -14,10 +15,25 @@ class MainScreen extends StatefulWidget {
 class _MainScreenState extends State<MainScreen>
     with SingleTickerProviderStateMixin {
   TabController _tabController;
+  String _author;
+  String _quote;
   void initState() {
     _tabController = TabController(length: 4, vsync: this, initialIndex: 0);
     _tabController.addListener(() {
       _changeColor();
+    });
+    _fetchQuote().then((quote) {
+      setState(() {
+        _author = quote['author'];
+        _quote = quote['text'];
+      });
+    }).onError((error, stackTrace) {
+      print("Caught Exception");
+      setState(() {
+        _quote =
+            'All our dreams can come true, if we have the courage to pursue them';
+        _author = 'Walt Disney';
+      });
     });
     super.initState();
   }
@@ -25,6 +41,11 @@ class _MainScreenState extends State<MainScreen>
   void dispose() {
     _tabController.dispose();
     super.dispose();
+  }
+
+  Future<Map<String, String>> _fetchQuote() async {
+    final quote = await QuotePicker.fetchQuote();
+    return quote;
   }
 
   bool _homeActive = true;
@@ -112,11 +133,12 @@ class _MainScreenState extends State<MainScreen>
       ),
       body: TabBarView(
         controller: _tabController,
+        physics: RangeMaintainingScrollPhysics(),
         children: [
           HomeScreen(),
           FinishedTasksScreen(),
           StatisticsScreen(),
-          ProfileScreen(),
+          ProfileScreen(quote: _quote, author: _author),
         ],
       ),
       floatingActionButton: FloatingActionButton(

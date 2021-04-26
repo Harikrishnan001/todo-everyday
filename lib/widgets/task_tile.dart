@@ -29,7 +29,6 @@ class _TaskTileState extends State<TaskTile> {
   void initState() {
     _calculateColor();
     _timer = Timer.periodic(Duration(minutes: 1), (timer) {
-      print("Timer called");
       final oldColor = _dotColor;
       _calculateColor();
       if (oldColor != _dotColor) {

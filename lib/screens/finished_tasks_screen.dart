@@ -10,10 +10,20 @@ class FinishedTasksScreen extends StatefulWidget {
 class _FinishedTasksScreenState extends State<FinishedTasksScreen> {
   final _database = SQLDatabase();
 
+  Future<void> _deleteAll() async {
+    final result = await showDialog<bool>(
+        context: context, builder: (context) => DeleteAwareDialog());
+    if (result) {
+      await _database.removeAllFinishedTasks();
+      setState(() {});
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: CustomScrollView(
+        physics: BouncingScrollPhysics(),
         slivers: [
           SliverPadding(
             padding: const EdgeInsets.all(10.0),
@@ -27,18 +37,20 @@ class _FinishedTasksScreenState extends State<FinishedTasksScreen> {
                   borderRadius: BorderRadius.circular(15.0)),
               elevation: 2,
               brightness: Brightness.dark,
+              actions: [
+                IconButton(
+                  icon: Icon(
+                    Icons.delete_rounded,
+                    size: 30.0,
+                  ),
+                  onPressed: () => _deleteAll(),
+                ),
+              ],
             ),
           ),
           FutureBuilder(
             future: _database.getFinishedTasks(),
             builder: (context, snapshot) {
-              if (snapshot.connectionState == ConnectionState.waiting) {
-                return SliverToBoxAdapter(
-                  child: Center(
-                    child: CircularProgressIndicator(),
-                  ),
-                );
-              }
               if (snapshot.hasError) {
                 return SliverToBoxAdapter(
                     child: Center(child: Text('Something went wrong')));
@@ -67,6 +79,32 @@ class _FinishedTasksScreenState extends State<FinishedTasksScreen> {
           ),
         ],
       ),
+    );
+  }
+}
+
+class DeleteAwareDialog extends StatelessWidget {
+  final Future<void> Function() onConfirm;
+
+  const DeleteAwareDialog({Key key, this.onConfirm}) : super(key: key);
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      content: Text('Are you sure about deleting the entire history?'),
+      actions: [
+        TextButton(
+          onPressed: () {
+            Navigator.of(context).pop(true);
+          },
+          child: Text('Yes'),
+        ),
+        TextButton(
+          onPressed: () {
+            Navigator.of(context).pop(false);
+          },
+          child: Text('Cancel'),
+        ),
+      ],
     );
   }
 }

@@ -9,7 +9,7 @@ class EditReminderScreen extends StatefulWidget {
 
   EditReminderScreen({
     Key key,
-    @required this.task,
+    this.task,
     this.editMode = false,
   }) : super(key: key);
   @override
