@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:todo/data/sql_database.dart';
+import 'package:todo/helpers/alarm_scheduler.dart';
 import 'package:todo/helpers/date_time.dart';
 import '../models/task.dart';
 
@@ -85,7 +86,15 @@ class _EditReminderScreenState extends State<EditReminderScreen> {
     task.taskDescription = _descriptionController.text;
     task.startTime = pickedStartTime.millisecondsSinceEpoch;
     task.endTime = pickedEndTime.millisecondsSinceEpoch;
-
+    if (_isNewTask || widget.editMode) {
+      if (task.shouldRemind) {
+        await AlarmScheduler.cancelAlarm(task.id);
+        await AlarmScheduler.scheduleAlarmWithSong(task);
+      } else {
+        await AlarmScheduler.cancelAlarm(task.id);
+        await AlarmScheduler.scheduleAlarmWithBeep(task);
+      }
+    }
     if (_isNewTask)
       await _database.insertTask(task);
     else
@@ -360,11 +369,13 @@ class _EditReminderScreenState extends State<EditReminderScreen> {
                             SwitchListTile(
                               title: Text('🔔  Remind me'),
                               value: task.shouldRemind,
-                              onChanged: (value) {
-                                setState(() {
-                                  task.shouldRemind = value;
-                                });
-                              },
+                              onChanged: _isNewTask || widget.editMode
+                                  ? (remind) {
+                                      setState(() {
+                                        task.shouldRemind = remind;
+                                      });
+                                    }
+                                  : null,
                             ),
                             Spacer(),
                             TextButton(

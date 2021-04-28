@@ -324,7 +324,6 @@ class _RectangleStatisticsBiscutState extends State<RectangleStatisticsBiscut>
   @override
   void initState() {
     SQLDatabase().getStatisticsData(widget.mode).then((data) {
-      if(this.)
       setState(() {
         total = data.total.toDouble();
         success = data.success.toDouble();

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:todo/helpers/quote_picker.dart';
+import 'package:todo/main.dart';
 import '../screens/edit_reminder_screen.dart';
 import '../screens/profile_screen.dart';
 import 'finished_tasks_screen.dart';
@@ -177,3 +179,26 @@ class _MainScreenState extends State<MainScreen>
     );
   }
 }
+
+//  Future scheduleAlarm() async {
+//     var scheduleNotificationDateTime =
+//         DateTime.now().add(Duration(seconds: 10));
+//     const AndroidNotificationDetails androidPlatformChannelSpecifics =
+//         AndroidNotificationDetails(
+//             'your channel id', 'your channel name', 'your channel description',
+//             icon: 'facebooklogo',
+//             importance: Importance.max,
+//             priority: Priority.high,
+//             largeIcon: DrawableResourceAndroidBitmap('facebooklogo'),
+//             sound: RawResourceAndroidNotificationSound('annoyingalarm'),
+//             playSound: true,
+//             showWhen: false);
+//     const NotificationDetails platformChannelSpecifics =
+//         NotificationDetails(android: androidPlatformChannelSpecifics);
+//     await flutterLocalNotificationsPlugin.schedule(
+//         0,
+//         'Title',
+//         'This is the body',
+//         scheduleNotificationDateTime,
+//         platformChannelSpecifics);
+//   }

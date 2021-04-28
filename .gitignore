@@ -30,6 +30,7 @@
 .pub-cache/
 .pub/
 /build/
+/web/
 
 # Web related
 lib/generated_plugin_registrant.dart
@@ -39,6 +40,9 @@ app.*.symbols
 
 # Obfuscation related
 app.*.map.json
+
+# Sensitive information
+key.properties
 
 # Android Studio will place build artifacts here
 /android/app/debug
