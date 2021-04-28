@@ -84,13 +84,9 @@ class SQLDatabase {
   }
 
   Future<List<Task>> getFinishedTasks() async {
-    final list = await _db.query(
-      tableReminder,
-      where:
-          '$colIsDone=? OR ($colEndTime < ${DateTime.now().millisecondsSinceEpoch} AND $colIsDone =?)',
-      whereArgs: ['1', '0'],
-      orderBy: colEndTime,
-    );
+    final sql =
+        "SELECT * FROM $tableReminder WHERE $colIsDone=? OR ($colEndTime < ${DateTime.now().millisecondsSinceEpoch} AND $colIsDone =?) ORDER BY $colEndTime DESC";
+    final list = await _db.rawQuery(sql, ['1', '0']);
     return list.map((map) => Task.fromMap(map)).toList();
   }
 
@@ -190,5 +186,12 @@ class SQLDatabase {
     int success = await getCompletedTasksCount(mode);
     int failed = await getFailedTasksCount(mode);
     return StatisticsData(total, success, failed);
+  }
+
+  Future<Task> getLastInsertedTask() async {
+    final sql =
+        "SELECT * FROM $tableReminder WHERE $colId =(SELECT MAX($colId) FROM $tableReminder)";
+    final listMap = await _db.rawQuery(sql);
+    return Task.fromMap(listMap[0]);
   }
 }

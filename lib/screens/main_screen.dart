@@ -169,7 +169,8 @@ class _MainScreenState extends State<MainScreen>
               child: Icon(Icons.add),
               onPressed: () {
                 Navigator.of(context, rootNavigator: true).push(
-                    MaterialPageRoute(builder: (_) => EditReminderScreen()));
+                    MaterialPageRoute(
+                        builder: (_) => EditReminderScreen(editMode: true)));
               },
               isExtended: true,
             )

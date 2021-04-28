@@ -112,7 +112,7 @@ class _CircleStatisticsBiscutState extends State<CircleStatisticsBiscut>
     SQLDatabase().getStatisticsData(TaskGatherMode.daily).then(
       (data) {
         setState(() {
-          total = data.total.toDouble();
+          if (mounted) total = data.total.toDouble();
           success = data.success.toDouble();
           failed = data.failed.toDouble();
           _animationController =
@@ -324,38 +324,39 @@ class _RectangleStatisticsBiscutState extends State<RectangleStatisticsBiscut>
   @override
   void initState() {
     SQLDatabase().getStatisticsData(widget.mode).then((data) {
-      setState(() {
-        total = data.total.toDouble();
-        success = data.success.toDouble();
-        failed = data.failed.toDouble();
-        _animationController =
-            AnimationController(vsync: this, duration: Duration(seconds: 2));
-        _blueAnimation = Tween<double>(
-                begin: 0,
-                end: (total - success - failed) / total >= 0
-                    ? (total - success - failed) / total
-                    : 0.0)
-            .animate(CurvedAnimation(
-                parent: _animationController, curve: Curves.elasticOut));
-        _greenAnimation = Tween<double>(
-                begin: 0, end: success / total >= 0 ? success / total : 0.0)
-            .animate(CurvedAnimation(
-                parent: _animationController, curve: Curves.elasticOut));
-        _redAnimation = Tween<double>(
-                begin: 0, end: failed / total >= 0 ? failed / total : 0.0)
-            .animate(CurvedAnimation(
-                parent: _animationController, curve: Curves.elasticOut));
-        _blueAnimation.addListener(() {
-          setState(() {});
+      if (mounted)
+        setState(() {
+          total = data.total.toDouble();
+          success = data.success.toDouble();
+          failed = data.failed.toDouble();
+          _animationController =
+              AnimationController(vsync: this, duration: Duration(seconds: 2));
+          _blueAnimation = Tween<double>(
+                  begin: 0,
+                  end: (total - success - failed) / total >= 0
+                      ? (total - success - failed) / total
+                      : 0.0)
+              .animate(CurvedAnimation(
+                  parent: _animationController, curve: Curves.elasticOut));
+          _greenAnimation = Tween<double>(
+                  begin: 0, end: success / total >= 0 ? success / total : 0.0)
+              .animate(CurvedAnimation(
+                  parent: _animationController, curve: Curves.elasticOut));
+          _redAnimation = Tween<double>(
+                  begin: 0, end: failed / total >= 0 ? failed / total : 0.0)
+              .animate(CurvedAnimation(
+                  parent: _animationController, curve: Curves.elasticOut));
+          _blueAnimation.addListener(() {
+            setState(() {});
+          });
+          _greenAnimation.addListener(() {
+            setState(() {});
+          });
+          _redAnimation.addListener(() {
+            setState(() {});
+          });
+          _animationController.forward();
         });
-        _greenAnimation.addListener(() {
-          setState(() {});
-        });
-        _redAnimation.addListener(() {
-          setState(() {});
-        });
-        _animationController.forward();
-      });
     }).onError((error, stackTrace) {
       print("Something went wrong");
     });

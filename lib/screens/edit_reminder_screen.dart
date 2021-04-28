@@ -86,19 +86,20 @@ class _EditReminderScreenState extends State<EditReminderScreen> {
     task.taskDescription = _descriptionController.text;
     task.startTime = pickedStartTime.millisecondsSinceEpoch;
     task.endTime = pickedEndTime.millisecondsSinceEpoch;
-    if (_isNewTask || widget.editMode) {
-      if (task.shouldRemind) {
-        await AlarmScheduler.cancelAlarm(task.id);
-        await AlarmScheduler.scheduleAlarmWithSong(task);
-      } else {
-        await AlarmScheduler.cancelAlarm(task.id);
-        await AlarmScheduler.scheduleAlarmWithBeep(task);
-      }
-    }
+
     if (_isNewTask)
       await _database.insertTask(task);
     else
       await _database.updateTask(task);
+    task = await _database.getLastInsertedTask();
+    if (_isNewTask || widget.editMode) {
+      if (task.shouldRemind) {
+        await AlarmScheduler.cancelAlarm(task.id);
+        await AlarmScheduler.scheduleAlarmWithSound(task);
+      } else {
+        await AlarmScheduler.cancelAlarm(task.id);
+      }
+    }
     Navigator.of(context).pop();
   }
 
@@ -355,7 +356,7 @@ class _EditReminderScreenState extends State<EditReminderScreen> {
                                         margin: const EdgeInsets.symmetric(
                                             horizontal: 10.0),
                                         child: Text(
-                                          "\"${_descriptionController.text}\"",
+                                          "${_descriptionController.text}",
                                           style: TextStyle(
                                             color: Colors.black,
                                             fontSize: 17.0,
@@ -366,17 +367,19 @@ class _EditReminderScreenState extends State<EditReminderScreen> {
                                     ),
                                   ),
                             Spacer(),
-                            SwitchListTile(
-                              title: Text('🔔  Remind me'),
-                              value: task.shouldRemind,
-                              onChanged: _isNewTask || widget.editMode
-                                  ? (remind) {
-                                      setState(() {
-                                        task.shouldRemind = remind;
-                                      });
-                                    }
-                                  : null,
-                            ),
+                            _isNewTask || _editMode
+                                ? SwitchListTile(
+                                    title: Text('🔔  Remind me'),
+                                    value: task.shouldRemind,
+                                    onChanged: _isNewTask || _editMode
+                                        ? (remind) {
+                                            setState(() {
+                                              task.shouldRemind = remind;
+                                            });
+                                          }
+                                        : null,
+                                  )
+                                : SizedBox(),
                             Spacer(),
                             TextButton(
                               onPressed: _isNewTask || _editMode

@@ -4,54 +4,7 @@ import 'package:todo/models/task.dart';
 import '../main.dart';
 
 class AlarmScheduler {
-  static Future scheduleAlarmWithSong(Task task) async {
-    final exists = await _checkIfAlreadyScheduled(task.id);
-    if (exists) return;
-    var scheduleNotificationDateTime =
-        DateTime.fromMillisecondsSinceEpoch(task.endTime);
-    const AndroidNotificationDetails androidPlatformChannelSpecifics =
-        AndroidNotificationDetails('v1', 'Todo', 'Reminder',
-            icon: 'facebooklogo',
-            importance: Importance.max,
-            priority: Priority.high,
-            largeIcon: DrawableResourceAndroidBitmap('facebooklogo'),
-            sound: RawResourceAndroidNotificationSound('annoyingalarm'),
-            playSound: true,
-            showWhen: false);
-    const NotificationDetails platformChannelSpecifics =
-        NotificationDetails(android: androidPlatformChannelSpecifics);
-    await flutterLocalNotificationsPlugin.schedule(
-        task.id,
-        task.task,
-        'Time\'s up!\n Did you completed the task?\nIf not better luck next time.',
-        scheduleNotificationDateTime,
-        platformChannelSpecifics);
-  }
-
-  static Future scheduleAlarmWithBeep(Task task) async {
-    final exists = await _checkIfAlreadyScheduled(task.id);
-    if (exists) return;
-    var scheduleNotificationDateTime =
-        DateTime.fromMillisecondsSinceEpoch(task.endTime);
-    const AndroidNotificationDetails androidPlatformChannelSpecifics =
-        AndroidNotificationDetails('v1', 'Todo', 'Reminder',
-            icon: 'facebooklogo',
-            importance: Importance.max,
-            priority: Priority.high,
-            largeIcon: DrawableResourceAndroidBitmap('facebooklogo'),
-            playSound: true,
-            showWhen: false);
-    const NotificationDetails platformChannelSpecifics =
-        NotificationDetails(android: androidPlatformChannelSpecifics);
-    await flutterLocalNotificationsPlugin.schedule(
-        task.id,
-        task.task,
-        'Time\'s up!\n Did you completed the task?\nIf not better luck next time.',
-        scheduleNotificationDateTime,
-        platformChannelSpecifics);
-  }
-
-  static Future scheduleAlarmWithoutSound(Task task) async {
+  static Future scheduleAlarmWithSound(Task task) async {
     final exists = await _checkIfAlreadyScheduled(task.id);
     if (exists) return;
     var scheduleNotificationDateTime =
