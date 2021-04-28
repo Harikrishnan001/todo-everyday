@@ -56,7 +56,7 @@ class _EditReminderScreenState extends State<EditReminderScreen> {
     } else {
       _isNewTask = false;
       _title = 'Task';
-      _buttonText = 'Edit Task'; //////////TODO:Use carefully
+      _buttonText = 'Edit Task';
       task = widget.task;
 
       pickedStartTime = DateTime.fromMillisecondsSinceEpoch(task.startTime);
@@ -325,18 +325,37 @@ class _EditReminderScreenState extends State<EditReminderScreen> {
                               ],
                             ),
                             Spacer(),
-                            SizedBox.fromSize(
-                              size: Size(constraints.maxWidth,
-                                  constraints.maxHeight / 4.8),
-                              child: TextField(
-                                enabled: _editMode || _isNewTask,
-                                maxLines: 2,
-                                controller: _descriptionController,
-                                decoration: InputDecoration(
-                                  labelText: 'Description',
-                                ),
-                              ),
-                            ),
+                            _editMode || _isNewTask
+                                ? SizedBox.fromSize(
+                                    size: Size(constraints.maxWidth,
+                                        constraints.maxHeight / 4.8),
+                                    child: TextField(
+                                      enabled: _editMode || _isNewTask,
+                                      maxLines: 2,
+                                      controller: _descriptionController,
+                                      decoration: InputDecoration(
+                                        labelText: 'Description',
+                                      ),
+                                    ),
+                                  )
+                                : SizedBox.fromSize(
+                                    size: Size(constraints.maxWidth,
+                                        constraints.maxHeight / 4.8),
+                                    child: SingleChildScrollView(
+                                      child: Container(
+                                        margin: const EdgeInsets.symmetric(
+                                            horizontal: 10.0),
+                                        child: Text(
+                                          "\"${_descriptionController.text}\"",
+                                          style: TextStyle(
+                                            color: Colors.black,
+                                            fontSize: 17.0,
+                                          ),
+                                          maxLines: 4,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
                             Spacer(),
                             SwitchListTile(
                               title: Text('🔔  Remind me'),

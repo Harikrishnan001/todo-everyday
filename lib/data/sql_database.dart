@@ -1,7 +1,16 @@
 import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:todo/helpers/date_checker.dart';
+import 'package:todo/models/statistics.dart';
 import '../models/task.dart';
+
+enum TaskGatherMode {
+  daily,
+  weekly,
+  monthly,
+  yearly,
+}
 
 class SQLDatabase {
   final dbName = 'todo';
@@ -97,5 +106,89 @@ class SQLDatabase {
 
   Future<void> closeDatabase() async {
     await _db.close();
+  }
+
+  Future<int> getAllTasksCount(TaskGatherMode mode) async {
+    final list = await getAllTasks();
+    int count = 0;
+    if (mode == TaskGatherMode.daily) {
+      for (final item in list)
+        if (DateChecker.checkIfSameDay(
+            DateTime.fromMillisecondsSinceEpoch(item.startTime))) count++;
+    } else if (mode == TaskGatherMode.monthly) {
+      for (final item in list)
+        if (DateChecker.checkIfSameMonth(
+            DateTime.fromMillisecondsSinceEpoch(item.startTime))) count++;
+    } else if (mode == TaskGatherMode.weekly) {
+      for (final item in list)
+        if (DateChecker.checkIfSameWeek(
+            DateTime.fromMillisecondsSinceEpoch(item.startTime))) count++;
+    } else {
+      for (final item in list)
+        if (DateChecker.checkIfSameYear(
+            DateTime.fromMillisecondsSinceEpoch(item.startTime))) count++;
+    }
+    return count;
+  }
+
+  Future<int> getCompletedTasksCount(TaskGatherMode mode) async {
+    final list = await getFinishedTasks();
+    int count = 0;
+    if (mode == TaskGatherMode.daily) {
+      for (final item in list)
+        if (DateChecker.checkIfSameDay(
+                DateTime.fromMillisecondsSinceEpoch(item.startTime)) &&
+            item.isDone) count++;
+    } else if (mode == TaskGatherMode.weekly) {
+      for (final item in list)
+        if (DateChecker.checkIfSameWeek(
+                DateTime.fromMillisecondsSinceEpoch(item.startTime)) &&
+            item.isDone) count++;
+    } else if (mode == TaskGatherMode.monthly) {
+      for (final item in list)
+        if (DateChecker.checkIfSameMonth(
+                DateTime.fromMillisecondsSinceEpoch(item.startTime)) &&
+            item.isDone) count++;
+    } else {
+      for (final item in list)
+        if (DateChecker.checkIfSameYear(
+                DateTime.fromMillisecondsSinceEpoch(item.startTime)) &&
+            item.isDone) count++;
+    }
+    return count;
+  }
+
+  Future<int> getFailedTasksCount(TaskGatherMode mode) async {
+    final list = await getFinishedTasks();
+    int count = 0;
+    if (mode == TaskGatherMode.daily) {
+      for (final item in list)
+        if (DateChecker.checkIfSameDay(
+                DateTime.fromMillisecondsSinceEpoch(item.startTime)) &&
+            !item.isDone) count++;
+    } else if (mode == TaskGatherMode.weekly) {
+      for (final item in list)
+        if (DateChecker.checkIfSameWeek(
+                DateTime.fromMillisecondsSinceEpoch(item.startTime)) &&
+            !item.isDone) count++;
+    } else if (mode == TaskGatherMode.monthly) {
+      for (final item in list)
+        if (DateChecker.checkIfSameMonth(
+                DateTime.fromMillisecondsSinceEpoch(item.startTime)) &&
+            !item.isDone) count++;
+    } else {
+      for (final item in list)
+        if (DateChecker.checkIfSameYear(
+                DateTime.fromMillisecondsSinceEpoch(item.startTime)) &&
+            !item.isDone) count++;
+    }
+    return count;
+  }
+
+  Future<StatisticsData> getStatisticsData(TaskGatherMode mode) async {
+    int total = await getAllTasksCount(mode);
+    int success = await getCompletedTasksCount(mode);
+    int failed = await getFailedTasksCount(mode);
+    return StatisticsData(total, success, failed);
   }
 }

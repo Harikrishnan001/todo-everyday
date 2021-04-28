@@ -15,8 +15,9 @@ class MainScreen extends StatefulWidget {
 class _MainScreenState extends State<MainScreen>
     with SingleTickerProviderStateMixin {
   TabController _tabController;
-  String _author;
-  String _quote;
+  String _author = "Loading...";
+  String _quote = "Waiting for a quote...";
+  bool _isFloatingActionButtonActive = true;
   void initState() {
     _tabController = TabController(length: 4, vsync: this, initialIndex: 0);
     _tabController.addListener(() {
@@ -28,7 +29,6 @@ class _MainScreenState extends State<MainScreen>
         _quote = quote['text'];
       });
     }).onError((error, stackTrace) {
-      print("Caught Exception");
       setState(() {
         _quote =
             'All our dreams can come true, if we have the courage to pursue them';
@@ -36,6 +36,18 @@ class _MainScreenState extends State<MainScreen>
       });
     });
     super.initState();
+  }
+
+  void _disableFloatingActionButton() {
+    setState(() {
+      _isFloatingActionButtonActive = false;
+    });
+  }
+
+  void _enableFloatingActionButton() {
+    setState(() {
+      _isFloatingActionButtonActive = true;
+    });
   }
 
   void dispose() {
@@ -136,20 +148,30 @@ class _MainScreenState extends State<MainScreen>
         physics: RangeMaintainingScrollPhysics(),
         children: [
           HomeScreen(),
-          FinishedTasksScreen(),
+          FinishedTasksScreen(
+            onDisable: _disableFloatingActionButton,
+            onEnable: _enableFloatingActionButton,
+          ),
           StatisticsScreen(),
-          ProfileScreen(quote: _quote, author: _author),
+          ProfileScreen(
+            quote: _quote,
+            author: _author,
+            onDisable: _disableFloatingActionButton,
+            onEnable: _enableFloatingActionButton,
+          ),
         ],
       ),
-      floatingActionButton: FloatingActionButton(
-        mini: false,
-        child: Icon(Icons.add),
-        onPressed: () {
-          Navigator.of(context, rootNavigator: true)
-              .push(MaterialPageRoute(builder: (_) => EditReminderScreen()));
-        },
-        isExtended: true,
-      ),
+      floatingActionButton: _isFloatingActionButtonActive
+          ? FloatingActionButton(
+              mini: false,
+              child: Icon(Icons.add),
+              onPressed: () {
+                Navigator.of(context, rootNavigator: true).push(
+                    MaterialPageRoute(builder: (_) => EditReminderScreen()));
+              },
+              isExtended: true,
+            )
+          : null,
       floatingActionButtonLocation:
           FloatingActionButtonLocation.miniCenterDocked,
     );

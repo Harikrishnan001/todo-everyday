@@ -1,8 +1,16 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:todo/data/sql_database.dart';
 import 'package:todo/widgets/task_tile.dart';
 
 class FinishedTasksScreen extends StatefulWidget {
+  final VoidCallback onDisable;
+  final VoidCallback onEnable;
+
+  const FinishedTasksScreen(
+      {Key key, @required this.onDisable, @required this.onEnable})
+      : super(key: key);
   @override
   _FinishedTasksScreenState createState() => _FinishedTasksScreenState();
 }
@@ -11,6 +19,20 @@ class _FinishedTasksScreenState extends State<FinishedTasksScreen> {
   final _database = SQLDatabase();
 
   Future<void> _deleteAll() async {
+    final list = await _database.getFinishedTasks();
+    if (list.isEmpty) {
+      widget.onDisable();
+      Future.delayed(Duration(seconds: 3), () {
+        widget.onEnable();
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("Complete some tasks before!"),
+          duration: Duration(seconds: 2),
+        ),
+      );
+      return;
+    }
     final result = await showDialog<bool>(
         context: context, builder: (context) => DeleteAwareDialog());
     if (result) {
@@ -31,8 +53,7 @@ class _FinishedTasksScreenState extends State<FinishedTasksScreen> {
               backgroundColor: Colors.blue[700],
               title: Text('History'),
               pinned: true,
-              expandedHeight: MediaQuery.of(context).size.height / 4.5,
-              flexibleSpace: FlexibleSpaceBar(),
+              toolbarHeight: MediaQuery.of(context).size.height / 8,
               shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(15.0)),
               elevation: 2,

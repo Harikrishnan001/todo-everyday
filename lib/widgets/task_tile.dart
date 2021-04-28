@@ -258,7 +258,7 @@ class TaskHolder extends StatelessWidget {
           Flexible(
             child: Text(
               task.taskDescription == null || task.taskDescription.length == 0
-                  ? ''
+                  ? 'Started on: ${Format.getTime(DateTime.fromMillisecondsSinceEpoch(task.startTime))} ${Format.getCalendarDate(DateTime.fromMillisecondsSinceEpoch(task.startTime))} '
                   : task.taskDescription,
               style: TextStyle(fontSize: 12.0),
               maxLines: 2,
