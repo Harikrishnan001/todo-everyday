@@ -1,12 +1,14 @@
-# todo
+# Todo
 
-A new Flutter project.
+An app for managing and reminding you of the important tasks. It also provides a self assessment opportunity by inspecting the history of tasks, which you were not able to complete. It also provides facility for daily, weekly, monthly and yearly assesments.As an add on there is also a quote to inspire you at the profile section.
 
-## Getting Started
+## Features
 
-This project is a starting point for a Flutter application.
-
-A few resources to get you started if this is your first Flutter project:
+* Keeps track of your daily tasks.
+* Shows the order in which you scheduled the task.
+* Reminds you of the tasks.
+* Shows history of previous tasks.
+* Daily, weekly, monthly and yearly analysis of activities.
 
 - [Lab: Write your first Flutter app](https://flutter.dev/docs/get-started/codelab)
 - [Cookbook: Useful Flutter samples](https://flutter.dev/docs/cookbook)

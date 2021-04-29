@@ -147,7 +147,8 @@ class _CircleStatisticsBiscutState extends State<CircleStatisticsBiscut>
         });
       },
     ).onError((error, stackTrace) {
-      print("*******Something went wrong:$error");
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text('ERROR:$error\nReport this error to developer')));
     });
 
     super.initState();
@@ -358,7 +359,8 @@ class _RectangleStatisticsBiscutState extends State<RectangleStatisticsBiscut>
           _animationController.forward();
         });
     }).onError((error, stackTrace) {
-      print("Something went wrong");
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text('ERROR:$error\nReport this error to developer')));
     });
 
     super.initState();

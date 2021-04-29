@@ -5,6 +5,7 @@ import './screens/main_screen.dart';
 
 final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
     FlutterLocalNotificationsPlugin();
+const MethodChannel platform = MethodChannel('todo');
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -12,6 +13,7 @@ void main() async {
     DeviceOrientation.portraitUp,
     DeviceOrientation.portraitDown,
   ]);
+
   const AndroidInitializationSettings initializationSettingsAndroid =
       AndroidInitializationSettings('icon');
   final InitializationSettings initializationSettings = InitializationSettings(

@@ -64,6 +64,7 @@ class SQLDatabase {
   }
 
   Future<List<Task>> getAllTasks() async {
+    if (_db == null) await init();
     final list = await _db.query(
       tableReminder,
       orderBy: colEndTime,

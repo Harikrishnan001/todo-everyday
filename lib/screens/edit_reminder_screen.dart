@@ -21,11 +21,13 @@ class _EditReminderScreenState extends State<EditReminderScreen> {
   String _title;
   String _buttonText;
   bool _editMode;
-  Task task;
+  Task _task;
   TextEditingController _nameController;
   TextEditingController _descriptionController;
   bool _isNewTask = true;
+  bool _buttonActive = true;
   final SQLDatabase _database = SQLDatabase();
+  AlarmScheduler _alarmScheduler = AlarmScheduler();
 
   DateTime pickedStartTime;
   DateTime pickedEndTime;
@@ -35,70 +37,99 @@ class _EditReminderScreenState extends State<EditReminderScreen> {
     _descriptionController = TextEditingController();
     _editMode = widget.editMode;
     if (widget.task == null) {
+      final dateTime = DateTime.now();
       _isNewTask = true;
+      _buttonActive = true;
       _title = 'Create New Task';
       _buttonText = 'Create Task';
-      task = Task(
-        startTime: DateTime.now().millisecondsSinceEpoch,
-        endTime: DateTime.now().millisecondsSinceEpoch,
+      _task = Task(
+        startTime: dateTime.millisecondsSinceEpoch,
+        endTime: dateTime.millisecondsSinceEpoch,
         task: '',
         taskDescription: '',
       );
-      pickedStartTime = DateTime.now();
-      pickedEndTime = DateTime.now();
+      pickedStartTime = dateTime;
+      pickedEndTime = dateTime;
     } else if (widget.editMode == true) {
       _isNewTask = false;
       _title = 'Edit Task';
       _buttonText = 'Save Changes';
-      task = widget.task;
+      _task = widget.task;
+      _editMode = true;
 
-      pickedStartTime = DateTime.fromMillisecondsSinceEpoch(task.startTime);
-      pickedEndTime = DateTime.fromMillisecondsSinceEpoch(task.endTime);
+      pickedStartTime = DateTime.fromMillisecondsSinceEpoch(_task.startTime);
+      pickedEndTime = DateTime.fromMillisecondsSinceEpoch(_task.endTime);
     } else {
       _isNewTask = false;
       _title = 'Task';
       _buttonText = 'Edit Task';
-      task = widget.task;
+      _task = widget.task;
+      _editMode = false;
 
-      pickedStartTime = DateTime.fromMillisecondsSinceEpoch(task.startTime);
-      pickedEndTime = DateTime.fromMillisecondsSinceEpoch(task.endTime);
+      pickedStartTime = DateTime.fromMillisecondsSinceEpoch(_task.startTime);
+      pickedEndTime = DateTime.fromMillisecondsSinceEpoch(_task.endTime);
     }
-    _nameController.text = task.task;
-    _descriptionController.text = task.taskDescription;
+    _nameController.text = _task.task;
+    _descriptionController.text = _task.taskDescription;
     super.initState();
+  }
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _descriptionController.dispose();
+    super.dispose();
   }
 
   Future<void> _saveTask() async {
     if (_nameController.text.length == 0) {
       ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Please give a name for the task')));
+      setState(() {
+        _buttonActive = true;
+      });
       return;
     }
     if (pickedEndTime.millisecondsSinceEpoch -
             pickedStartTime.millisecondsSinceEpoch <
         0) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text(
-              'Please consider selecting an end time greater than the start time')));
+        content: Text(
+            'Please consider selecting an end time greater than the start time'),
+      ));
+      setState(() {
+        _buttonActive = true;
+      });
       return;
     }
-    task.task = _nameController.text;
-    task.taskDescription = _descriptionController.text;
-    task.startTime = pickedStartTime.millisecondsSinceEpoch;
-    task.endTime = pickedEndTime.millisecondsSinceEpoch;
-
-    if (_isNewTask)
-      await _database.insertTask(task);
-    else
-      await _database.updateTask(task);
-    task = await _database.getLastInsertedTask();
-    if (_isNewTask || widget.editMode) {
-      if (task.shouldRemind) {
-        await AlarmScheduler.cancelAlarm(task.id);
-        await AlarmScheduler.scheduleAlarmWithSound(task);
-      } else {
-        await AlarmScheduler.cancelAlarm(task.id);
+    _task.task = _nameController.text;
+    _task.taskDescription = _descriptionController.text;
+    _task.startTime = pickedStartTime.millisecondsSinceEpoch;
+    _task.endTime = pickedEndTime.millisecondsSinceEpoch;
+    try {
+      if (_isNewTask)
+        await _database.insertTask(_task);
+      else
+        await _database.updateTask(_task);
+      if (_isNewTask) _task = await _database.getLastInsertedTask();
+      if (_isNewTask || widget.editMode) {
+        if (_task.shouldRemind) {
+          if (!_isNewTask) await _alarmScheduler.cancelAlarm(_task.id);
+          await _alarmScheduler.scheduleAlarmWithSound(_task);
+        } else {
+          await _alarmScheduler.cancelAlarm(_task.id);
+          await _alarmScheduler.scheduleAlarmWithoutSound(_task);
+        }
       }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text(
+              'ERROR:$e \nPlease consider reporting this error to the developer')));
+      print(e);
+    } finally {
+      setState(() {
+        _buttonActive = true;
+      });
     }
     Navigator.of(context).pop();
   }
@@ -106,8 +137,8 @@ class _EditReminderScreenState extends State<EditReminderScreen> {
   Future _showStartDatePicker() async {
     final date = await showDatePicker(
         context: context,
-        initialDate: DateTime.fromMillisecondsSinceEpoch(task.startTime),
-        firstDate: DateTime.fromMillisecondsSinceEpoch(task.startTime),
+        initialDate: DateTime.fromMillisecondsSinceEpoch(_task.startTime),
+        firstDate: DateTime.fromMillisecondsSinceEpoch(_task.startTime),
         lastDate: DateTime(3000));
     if (date == null) return;
     if (date != null) {
@@ -133,8 +164,8 @@ class _EditReminderScreenState extends State<EditReminderScreen> {
   Future _showEndDatePicker() async {
     final date = await showDatePicker(
         context: context,
-        initialDate: DateTime.fromMillisecondsSinceEpoch(task.startTime),
-        firstDate: DateTime.fromMillisecondsSinceEpoch(task.startTime),
+        initialDate: DateTime.fromMillisecondsSinceEpoch(_task.startTime),
+        firstDate: DateTime.fromMillisecondsSinceEpoch(_task.startTime),
         lastDate: DateTime(3000));
     if (date == null) return;
     if (date != null) {
@@ -161,7 +192,7 @@ class _EditReminderScreenState extends State<EditReminderScreen> {
     final time = await showTimePicker(
         context: context,
         initialTime: TimeOfDay.fromDateTime(
-            DateTime.fromMillisecondsSinceEpoch(task.startTime)));
+            DateTime.fromMillisecondsSinceEpoch(_task.startTime)));
     if (time == null) return;
     if (time != null) {
       final selectedDateTime = DateTime(
@@ -183,7 +214,7 @@ class _EditReminderScreenState extends State<EditReminderScreen> {
     final time = await showTimePicker(
         context: context,
         initialTime: TimeOfDay.fromDateTime(
-            DateTime.fromMillisecondsSinceEpoch(task.endTime)));
+            DateTime.fromMillisecondsSinceEpoch(_task.endTime)));
     if (time != null) {
       final selectedDateTime = DateTime(
         pickedEndTime.year,
@@ -242,7 +273,7 @@ class _EditReminderScreenState extends State<EditReminderScreen> {
                       ),
                       SizedBox(height: 8.0),
                       TextField(
-                        enabled: _editMode || _isNewTask,
+                        enabled: _editMode,
                         keyboardType: TextInputType.name,
                         controller: _nameController,
                         style: TextStyle(
@@ -292,9 +323,8 @@ class _EditReminderScreenState extends State<EditReminderScreen> {
                                       constraints.maxHeight / 6),
                                   child: CalendarDatePicker(
                                     pickedDate: pickedStartTime,
-                                    onPressed: _isNewTask || _editMode
-                                        ? _showStartDatePicker
-                                        : null,
+                                    onPressed:
+                                        _editMode ? _showStartDatePicker : null,
                                     title: 'Start date',
                                   ),
                                 ),
@@ -303,9 +333,8 @@ class _EditReminderScreenState extends State<EditReminderScreen> {
                                       constraints.maxHeight / 6),
                                   child: CalendarDatePicker(
                                     pickedDate: pickedEndTime,
-                                    onPressed: _isNewTask || _editMode
-                                        ? _showEndDatePicker
-                                        : null,
+                                    onPressed:
+                                        _editMode ? _showEndDatePicker : null,
                                     title: 'End date',
                                   ),
                                 ),
@@ -320,22 +349,19 @@ class _EditReminderScreenState extends State<EditReminderScreen> {
                                 TimeBiscut(
                                   title: 'Start time',
                                   time: Format.getTime(pickedStartTime),
-                                  onTap: _isNewTask || _editMode
-                                      ? _showStartTimePicker
-                                      : null,
+                                  onTap:
+                                      _editMode ? _showStartTimePicker : null,
                                 ),
                                 SizedBox(width: 10.0),
                                 TimeBiscut(
                                   title: 'End time',
                                   time: Format.getTime(pickedEndTime),
-                                  onTap: _isNewTask || _editMode
-                                      ? _showEndTimePicker
-                                      : null,
+                                  onTap: _editMode ? _showEndTimePicker : null,
                                 ),
                               ],
                             ),
                             Spacer(),
-                            _editMode || _isNewTask
+                            _editMode
                                 ? SizedBox.fromSize(
                                     size: Size(constraints.maxWidth,
                                         constraints.maxHeight / 4.8),
@@ -367,14 +393,14 @@ class _EditReminderScreenState extends State<EditReminderScreen> {
                                     ),
                                   ),
                             Spacer(),
-                            _isNewTask || _editMode
+                            _editMode
                                 ? SwitchListTile(
                                     title: Text('🔔  Remind me'),
-                                    value: task.shouldRemind,
+                                    value: _task.shouldRemind,
                                     onChanged: _isNewTask || _editMode
                                         ? (remind) {
                                             setState(() {
-                                              task.shouldRemind = remind;
+                                              _task.shouldRemind = remind;
                                             });
                                           }
                                         : null,
@@ -382,20 +408,26 @@ class _EditReminderScreenState extends State<EditReminderScreen> {
                                 : SizedBox(),
                             Spacer(),
                             TextButton(
-                              onPressed: _isNewTask || _editMode
-                                  ? () {
-                                      _saveTask();
-                                    }
-                                  : () => setState(() {
-                                        _editMode = !_editMode;
-                                        _buttonText = _editMode
-                                            ? 'Save Changes'
-                                            : 'Edit Task';
-                                      }),
+                              onPressed: _buttonActive
+                                  ? (_editMode
+                                      ? () {
+                                          setState(() {
+                                            _buttonActive = false;
+                                          });
+                                          _saveTask();
+                                        }
+                                      : () => setState(() {
+                                            _editMode = true;
+                                            _title = 'Edit Task';
+                                            _buttonText = 'Save Changes';
+                                          }))
+                                  : null,
                               style: ButtonStyle(
-                                backgroundColor:
-                                    MaterialStateProperty.all<Color>(
-                                        Colors.blue[700]),
+                                backgroundColor: _buttonActive
+                                    ? MaterialStateProperty.all<Color>(
+                                        Colors.blue[700])
+                                    : MaterialStateProperty.all<Color>(
+                                        Colors.grey),
                               ),
                               child: Padding(
                                 padding: const EdgeInsets.symmetric(
@@ -501,20 +533,20 @@ class CalendarDatePicker extends StatelessWidget {
       : super(key: key);
   @override
   Widget build(BuildContext context) {
-    return InputDecorator(
-      child: Text(
-        Format.getCalendarDate(DateTime.fromMillisecondsSinceEpoch(
-            pickedDate.millisecondsSinceEpoch)),
-        style: TextStyle(
-          fontWeight: FontWeight.w400,
-          fontSize: 14.0,
+    return GestureDetector(
+      onTap: onPressed != null ? () => onPressed() : null,
+      child: InputDecorator(
+        child: Text(
+          Format.getCalendarDate(DateTime.fromMillisecondsSinceEpoch(
+              pickedDate.millisecondsSinceEpoch)),
+          style: TextStyle(
+            fontWeight: FontWeight.w400,
+            fontSize: 14.0,
+          ),
         ),
-      ),
-      decoration: InputDecoration(
-        labelText: title,
-        suffix: IconButton(
-          icon: Icon(Icons.calendar_today_outlined),
-          onPressed: onPressed != null ? () => onPressed() : null,
+        decoration: InputDecoration(
+          labelText: title,
+          suffix: Icon(Icons.calendar_today_outlined),
         ),
       ),
     );

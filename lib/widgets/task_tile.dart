@@ -99,10 +99,12 @@ class _TaskTileState extends State<TaskTile> {
                     _dotColor == Colors.blue[700]
                         ? TextButton(
                             onPressed: () {
-                              Navigator.of(context, rootNavigator: true).push(
-                                  MaterialPageRoute(
+                              Navigator.of(context, rootNavigator: true)
+                                  .push(MaterialPageRoute(
                                       builder: (_) => EditReminderScreen(
-                                          task: widget.task)));
+                                            task: widget.task,
+                                            editMode: false,
+                                          )));
                             },
                             child: Text('Details'),
                           )
