@@ -13,7 +13,7 @@ void main() async {
     DeviceOrientation.portraitDown,
   ]);
   const AndroidInitializationSettings initializationSettingsAndroid =
-      AndroidInitializationSettings('facebooklogo');
+      AndroidInitializationSettings('icon');
   final InitializationSettings initializationSettings = InitializationSettings(
     android: initializationSettingsAndroid,
   );

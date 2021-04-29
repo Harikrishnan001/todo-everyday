@@ -3,8 +3,8 @@
     <!-- Required to fetch data from the internet. -->
 <uses-permission android:name="android.permission.INTERNET" />
    <application
-        android:label="todo"
-        android:icon="@mipmap/ic_launcher">
+        android:label="Todo"
+        android:icon="@mipmap/launcher_icon">
         <activity
             android:name=".MainActivity"
             android:launchMode="singleTop"
