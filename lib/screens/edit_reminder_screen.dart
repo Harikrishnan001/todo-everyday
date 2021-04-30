@@ -26,6 +26,7 @@ class _EditReminderScreenState extends State<EditReminderScreen> {
   TextEditingController _descriptionController;
   bool _isNewTask = true;
   bool _buttonActive = true;
+  bool _snackBarShowing = false;
   final SQLDatabase _database = SQLDatabase();
   AlarmScheduler _alarmScheduler = AlarmScheduler();
 
@@ -83,8 +84,19 @@ class _EditReminderScreenState extends State<EditReminderScreen> {
 
   Future<void> _saveTask() async {
     if (_nameController.text.length == 0) {
-      ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Please give a name for the task')));
+      if (!_snackBarShowing) {
+        setState(() {
+          _snackBarShowing = true;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Please give a name for the task')));
+        Future.delayed(Duration(seconds: 2), () {
+          if (mounted)
+            setState(() {
+              _snackBarShowing = false;
+            });
+        });
+      }
       setState(() {
         _buttonActive = true;
       });
@@ -93,10 +105,21 @@ class _EditReminderScreenState extends State<EditReminderScreen> {
     if (pickedEndTime.millisecondsSinceEpoch -
             pickedStartTime.millisecondsSinceEpoch <
         0) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text(
-            'Please consider selecting an end time greater than the start time'),
-      ));
+      if (!_snackBarShowing) {
+        setState(() {
+          _snackBarShowing = true;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text(
+              'Please consider selecting an end time greater than the start time'),
+        ));
+        Future.delayed(Duration(seconds: 2), () {
+          if (mounted)
+            setState(() {
+              _snackBarShowing = false;
+            });
+        });
+      }
       setState(() {
         _buttonActive = true;
       });
@@ -323,8 +346,9 @@ class _EditReminderScreenState extends State<EditReminderScreen> {
                                       constraints.maxHeight / 6),
                                   child: CalendarDatePicker(
                                     pickedDate: pickedStartTime,
-                                    onPressed:
-                                        _editMode ? _showStartDatePicker : null,
+                                    onPressed: _editMode && _isNewTask
+                                        ? _showStartDatePicker
+                                        : null,
                                     title: 'Start date',
                                   ),
                                 ),
@@ -349,8 +373,9 @@ class _EditReminderScreenState extends State<EditReminderScreen> {
                                 TimeBiscut(
                                   title: 'Start time',
                                   time: Format.getTime(pickedStartTime),
-                                  onTap:
-                                      _editMode ? _showStartTimePicker : null,
+                                  onTap: _editMode && _isNewTask
+                                      ? _showStartTimePicker
+                                      : null,
                                 ),
                                 SizedBox(width: 10.0),
                                 TimeBiscut(
