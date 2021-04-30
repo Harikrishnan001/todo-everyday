@@ -112,13 +112,13 @@ class _EditReminderScreenState extends State<EditReminderScreen> {
       else
         await _database.updateTask(_task);
       if (_isNewTask) _task = await _database.getLastInsertedTask();
-      if (_isNewTask || widget.editMode) {
+      if (_isNewTask || _editMode) {
+        print("should remind:${_task.shouldRemind}");
         if (_task.shouldRemind) {
           if (!_isNewTask) await _alarmScheduler.cancelAlarm(_task.id);
           await _alarmScheduler.scheduleAlarmWithSound(_task);
         } else {
           await _alarmScheduler.cancelAlarm(_task.id);
-          await _alarmScheduler.scheduleAlarmWithoutSound(_task);
         }
       }
     } catch (e) {

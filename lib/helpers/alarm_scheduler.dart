@@ -11,14 +11,19 @@ class AlarmScheduler {
     var scheduleNotificationDateTime =
         DateTime.fromMillisecondsSinceEpoch(task.endTime);
     const AndroidNotificationDetails androidPlatformChannelSpecifics =
-        AndroidNotificationDetails('v1', 'Todo', 'Reminder',
-            icon: 'icon',
-            importance: Importance.max,
-            priority: Priority.high,
-            largeIcon: DrawableResourceAndroidBitmap('icon'),
-            sound: RawResourceAndroidNotificationSound('annoyingalarm'),
-            playSound: true,
-            showWhen: true);
+        AndroidNotificationDetails(
+      'v1',
+      'Todo',
+      'Reminder',
+      icon: 'icon',
+      importance: Importance.max,
+      priority: Priority.high,
+      largeIcon: DrawableResourceAndroidBitmap('icon'),
+      sound: RawResourceAndroidNotificationSound('annoyingalarm'),
+      playSound: true,
+      enableLights: true,
+      showWhen: true,
+    );
     const NotificationDetails platformChannelSpecifics =
         NotificationDetails(android: androidPlatformChannelSpecifics);
     await flutterLocalNotificationsPlugin.schedule(
@@ -30,30 +35,32 @@ class AlarmScheduler {
     print("Alarm scheduled with sound");
   }
 
-  Future scheduleAlarmWithoutSound(Task task) async {
-    final exists = await _checkIfAlreadyScheduled(task.id);
-    if (exists) return;
+  // Future scheduleAlarmWithoutSound(Task task) async {
+  //   final exists = await _checkIfAlreadyScheduled(task.id);
+  //   if (exists) return;
 
-    var scheduleNotificationDateTime =
-        DateTime.fromMillisecondsSinceEpoch(task.endTime);
-    const AndroidNotificationDetails androidPlatformChannelSpecifics =
-        AndroidNotificationDetails('v1', 'Todo', 'Reminder',
-            icon: 'icon',
-            importance: Importance.max,
-            priority: Priority.high,
-            largeIcon: DrawableResourceAndroidBitmap('icon'),
-            playSound: true,
-            showWhen: true);
-    const NotificationDetails platformChannelSpecifics =
-        NotificationDetails(android: androidPlatformChannelSpecifics);
-    await flutterLocalNotificationsPlugin.schedule(
-        task.id,
-        task.task,
-        'Time\'s up! Did you completed the task?',
-        scheduleNotificationDateTime,
-        platformChannelSpecifics);
-    print("Alarm scheduled without sound");
-  }
+  //   var scheduleNotificationDateTime =
+  //       DateTime.fromMillisecondsSinceEpoch(task.endTime);
+  //   const AndroidNotificationDetails androidPlatformChannelSpecifics =
+  //       AndroidNotificationDetails('v1', 'Todo', 'Reminder',
+  //           icon: 'icon',
+  //           importance: Importance.max,
+  //           priority: Priority.high,
+  //           enableLights: true,
+  //           largeIcon: DrawableResourceAndroidBitmap('icon'),
+  //           sound: null,
+  //           playSound: true,
+  //           showWhen: true);
+  //   const NotificationDetails platformChannelSpecifics =
+  //       NotificationDetails(android: androidPlatformChannelSpecifics);
+  //   await flutterLocalNotificationsPlugin.schedule(
+  //       task.id,
+  //       task.task,
+  //       'Time\'s up! Did you completed the task?',
+  //       scheduleNotificationDateTime,
+  //       platformChannelSpecifics);
+  //   print("Alarm scheduled without sound");
+  // }
 
   Future cancelAlarm(int id) async {
     final exists = await _checkIfAlreadyScheduled(id);

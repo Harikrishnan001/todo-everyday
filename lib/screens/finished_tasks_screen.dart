@@ -44,6 +44,7 @@ class _FinishedTasksScreenState extends State<FinishedTasksScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.white,
       body: CustomScrollView(
         physics: BouncingScrollPhysics(),
         slivers: [
